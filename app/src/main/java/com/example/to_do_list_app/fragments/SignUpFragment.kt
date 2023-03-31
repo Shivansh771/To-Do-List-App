@@ -1,60 +1,71 @@
 package com.example.to_do_list_app.fragments
 
+import android.app.Activity
+import android.os.Binder
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.core.content.res.ResourcesCompat
+import androidx.navigation.NavController
+import androidx.navigation.Navigation
 import com.example.to_do_list_app.R
+import com.example.to_do_list_app.databinding.FragmentSignUpBinding
+import com.google.firebase.auth.FirebaseAuth
+import www.sanju.motiontoast.MotionToast
+import www.sanju.motiontoast.MotionToastStyle
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
 
-/**
- * A simple [Fragment] subclass.
- * Use the [SignUpFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class SignUpFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
-
+    private lateinit var auth:FirebaseAuth
+    private lateinit var navController: NavController
+    private lateinit var binding:FragmentSignUpBinding
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_sign_up, container, false)
+
+        binding=FragmentSignUpBinding.inflate(inflater,container,false)
+
+        return binding.root
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment SignUpFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            SignUpFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        init(view)
+        registerEvents()
     }
+
+    private fun registerEvents() {
+        binding.AuthTextView.setOnClickListener{
+            navController.navigate(R.id.action_signUpFragment_to_signInFragment)
+        }
+        binding.next.setOnClickListener{
+        val email=binding.email.text.toString().trim()
+        val pass=binding.password.text.toString().trim()
+        val verifyPass=binding.repassword.text.toString().trim()
+        if(email.isNotEmpty() && pass.isNotEmpty() && verifyPass.isNotEmpty()){
+            if(pass == verifyPass){
+                auth.createUserWithEmailAndPassword(email,pass).addOnCompleteListener {
+                    if (it.isSuccessful) {
+                        Toast.makeText(context, "Registered Successfully", Toast.LENGTH_LONG).show()
+                        navController.navigate(R.id.action_signUpFragment_to_homeFragment)
+                    } else {
+                        Toast.makeText(context, it.exception?.message, Toast.LENGTH_LONG).show()
+                    }
+                } }
+            }
+        }
+
+
+    }
+
+    private fun init(view:View){
+        navController=Navigation.findNavController(view)
+        auth=FirebaseAuth.getInstance()
+
+    }
+
 }
