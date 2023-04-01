@@ -41,15 +41,18 @@ class SignInFragment : Fragment() {
             val email=binding.email.text.toString().trim()
             val pass=binding.password.text.toString().trim()
             if(email.isNotEmpty() && pass.isNotEmpty()){
-
+                    binding.progressBar.visibility=View.VISIBLE
                     auth.signInWithEmailAndPassword(email,pass).addOnCompleteListener {
                         if (it.isSuccessful) {
-                            Toast.makeText(context, "LogIlon Successfully Successfully", Toast.LENGTH_LONG).show()
                             navController.navigate(R.id.action_signInFragment_to_homeFragment)
                         } else {
                             Toast.makeText(context, it.exception?.message, Toast.LENGTH_LONG).show()
                         }
+                        binding.progressBar.visibility=View.GONE
                      }
+            }
+            else{
+                Toast.makeText(context,"Empty fields not allowed",Toast.LENGTH_SHORT).show()
             }
         }
 
