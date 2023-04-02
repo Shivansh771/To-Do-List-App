@@ -11,7 +11,6 @@ import androidx.fragment.app.DialogFragment
 import com.example.to_do_list_app.R
 import com.example.to_do_list_app.databinding.FragmentAddTodoPopupBinding
 import com.google.android.material.textfield.TextInputEditText
-import www.sanju.motiontoast.MotionToast
 
 class AddTodoPopupFragment : DialogFragment() {
     private lateinit var listner:DialogNextBtnClickListner

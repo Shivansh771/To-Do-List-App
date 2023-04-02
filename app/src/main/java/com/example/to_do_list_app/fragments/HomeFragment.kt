@@ -7,23 +7,26 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.AppCompatEditText
-import androidx.fragment.app.FragmentHostCallback
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
-import com.example.to_do_list_app.R
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.to_do_list_app.Utils.ToDoData
+import com.example.to_do_list_app.Utils.TodoAdapter
 import com.example.to_do_list_app.databinding.FragmentHomeBinding
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.*
 
 
-class HomeFragment : Fragment(), AddTodoPopupFragment.DialogNextBtnClickListner {
+class HomeFragment : Fragment(), AddTodoPopupFragment.DialogNextBtnClickListner,
+    TodoAdapter.todoAdapterClicksInterface {
 
     private lateinit var auth:FirebaseAuth
     private lateinit var databaseReference: DatabaseReference
     private lateinit var navController: NavController
     private lateinit var binding:FragmentHomeBinding
     private lateinit var popupFragment: AddTodoPopupFragment
+    private lateinit var adapter:TodoAdapter
+    private lateinit var mList:MutableList<ToDoData>
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -37,6 +40,29 @@ class HomeFragment : Fragment(), AddTodoPopupFragment.DialogNextBtnClickListner 
         super.onViewCreated(view, savedInstanceState)
         init(view)
         regiterEvents()
+        getDataFromFirebase()
+    }
+
+    private fun getDataFromFirebase() {
+        databaseReference.addValueEventListener(object :ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+               mList.clear()
+                for(taskSnapshot in snapshot.children){
+                    val todoTask=taskSnapshot.key?.let {
+                        ToDoData(it,taskSnapshot.value.toString())
+                    }
+                    if(todoTask!=null){
+                        mList.add(todoTask)
+                    }
+                }
+                adapter.notifyDataSetChanged()
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Toast.makeText(context,error.message,Toast.LENGTH_SHORT).show()
+            }
+
+        })
     }
 
     private fun regiterEvents() {
@@ -51,6 +77,14 @@ class HomeFragment : Fragment(), AddTodoPopupFragment.DialogNextBtnClickListner 
         navController=Navigation.findNavController(view)
         auth= FirebaseAuth.getInstance()
         databaseReference=FirebaseDatabase.getInstance().reference.child("Tasks").child(auth.currentUser?.uid.toString())
+
+        binding.recyclerView.setHasFixedSize(true)
+        binding.recyclerView.layoutManager=LinearLayoutManager(context)
+        mList= mutableListOf()
+        adapter= TodoAdapter(mList)
+        adapter.setListener(this)
+        binding.recyclerView.adapter=adapter
+
     }
 
     override fun onSaveTask(todo: String, todoEt: AppCompatEditText) {
@@ -61,7 +95,26 @@ class HomeFragment : Fragment(), AddTodoPopupFragment.DialogNextBtnClickListner 
             Toast.makeText(context,it.exception?.message,Toast.LENGTH_SHORT).show()
         }
             popupFragment.dismiss()
+
         }
     }
+
+    override fun onDeleteTaskBtnClicked(toDoData: ToDoData) {
+        databaseReference.child(toDoData.taskId).removeValue().addOnCompleteListener {
+            if(it.isSuccessful){
+                Toast.makeText(context,"Deleted Successfully",Toast.LENGTH_SHORT).show()
+
+            }
+            else{
+                Toast.makeText(context,it.exception?.message,Toast.LENGTH_SHORT).show()
+
+            }
+        }
+    }
+
+    override fun onEditBtnClicked(toDoData: ToDoData) {
+        TODO("Not yet implemented")
+    }
+
 
 }

@@ -14,8 +14,7 @@ import androidx.navigation.Navigation
 import com.example.to_do_list_app.R
 import com.example.to_do_list_app.databinding.FragmentSignUpBinding
 import com.google.firebase.auth.FirebaseAuth
-import www.sanju.motiontoast.MotionToast
-import www.sanju.motiontoast.MotionToastStyle
+
 
 
 class SignUpFragment : Fragment() {
