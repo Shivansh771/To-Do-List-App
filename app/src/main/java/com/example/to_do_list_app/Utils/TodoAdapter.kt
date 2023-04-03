@@ -30,6 +30,9 @@ class TodoAdapter(private val list: MutableList<ToDoData>) :
                 binding.Edit.setOnClickListener{
                     listner?.onEditBtnClicked(this)
                 }
+                binding.box.setOnClickListener{
+                    listner?.onBoxBtnClicked(this)
+                }
             }
         }
     }
@@ -40,5 +43,6 @@ class TodoAdapter(private val list: MutableList<ToDoData>) :
     interface todoAdapterClicksInterface{
         fun onDeleteTaskBtnClicked(toDoData: ToDoData)
         fun onEditBtnClicked(toDoData: ToDoData)
+        fun onBoxBtnClicked(todoData:ToDoData)
     }
 }
