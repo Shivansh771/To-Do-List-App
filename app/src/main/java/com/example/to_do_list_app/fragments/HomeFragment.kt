@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.AppCompatEditText
+import androidx.fragment.app.FragmentTransaction
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,7 +25,7 @@ class HomeFragment : Fragment(), AddTodoPopupFragment.DialogNextBtnClickListner,
     private lateinit var databaseReference: DatabaseReference
     private lateinit var navController: NavController
     private lateinit var binding:FragmentHomeBinding
-    private lateinit var popupFragment: AddTodoPopupFragment
+    private  var popupFragment: AddTodoPopupFragment?=null
     private lateinit var adapter:TodoAdapter
     private lateinit var mList:MutableList<ToDoData>
     override fun onCreateView(
@@ -49,7 +50,7 @@ class HomeFragment : Fragment(), AddTodoPopupFragment.DialogNextBtnClickListner,
                mList.clear()
                 for(taskSnapshot in snapshot.children){
                     val todoTask=taskSnapshot.key?.let {
-                        ToDoData(it,taskSnapshot.value.toString())
+                        ToDoData(it,taskSnapshot.value.toString(),false)
                     }
                     if(todoTask!=null){
                         mList.add(todoTask)
@@ -67,17 +68,27 @@ class HomeFragment : Fragment(), AddTodoPopupFragment.DialogNextBtnClickListner,
 
     private fun regiterEvents() {
         binding.addBtn.setOnClickListener{
+            if(popupFragment!=null)
+                childFragmentManager.beginTransaction().remove(popupFragment!!).commit()
             popupFragment= AddTodoPopupFragment()
-            popupFragment.setListener(this)
-            popupFragment.show(childFragmentManager,"Add todo pop up fragment")
+            popupFragment?.setListener(this)
+            popupFragment?.show(childFragmentManager,AddTodoPopupFragment.TAG)
+        }
+        binding.signout.setOnClickListener{
+            auth.signOut()
+            getActivity()?.moveTaskToBack(true);
+            getActivity()?.finish();
+
+
         }
     }
 
+
+
     private fun init(view: View) {
-        navController=Navigation.findNavController(view)
+        navController= Navigation.findNavController(view)
         auth= FirebaseAuth.getInstance()
         databaseReference=FirebaseDatabase.getInstance().reference.child("Tasks").child(auth.currentUser?.uid.toString())
-
         binding.recyclerView.setHasFixedSize(true)
         binding.recyclerView.layoutManager=LinearLayoutManager(context)
         mList= mutableListOf()
@@ -94,8 +105,24 @@ class HomeFragment : Fragment(), AddTodoPopupFragment.DialogNextBtnClickListner,
         }else{
             Toast.makeText(context,it.exception?.message,Toast.LENGTH_SHORT).show()
         }
-            popupFragment.dismiss()
+            popupFragment!!.dismiss()
 
+        }
+    }
+
+    override fun onUpdateTask(toDoData: ToDoData, todoEt: AppCompatEditText) {
+       val map =HashMap<String,Any>()
+        map[toDoData.taskId]=toDoData.task
+        databaseReference.updateChildren(map).addOnCompleteListener {
+            if(it.isSuccessful){
+                Toast.makeText(context,"Edited Successfully",Toast.LENGTH_SHORT).show()
+            }else{
+                Toast.makeText(context,it.exception?.message,Toast.LENGTH_SHORT).show()
+
+            }
+            todoEt.text=null
+
+            popupFragment!!.dismiss()
         }
     }
 
@@ -113,7 +140,16 @@ class HomeFragment : Fragment(), AddTodoPopupFragment.DialogNextBtnClickListner,
     }
 
     override fun onEditBtnClicked(toDoData: ToDoData) {
-        TODO("Not yet implemented")
+        if(popupFragment!=null){
+            childFragmentManager.beginTransaction().remove(popupFragment!!).commit()
+        }
+        popupFragment=AddTodoPopupFragment.newInstance(toDoData.taskId,toDoData.task)
+        popupFragment!!.setListener(this)
+        popupFragment!!.show(childFragmentManager,AddTodoPopupFragment.TAG)
+    }
+
+    override fun onBoxBtnClicked(todoData: ToDoData) {
+
     }
 
 
